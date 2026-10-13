@@ -15,7 +15,6 @@ import AuthInput from "../inputs/AuthInput";
 import OtpInput from "../inputs/OtpInput";
 import Button from "../common/Button";
 import Modal from "./Modal";
-import SpinnerMini from "../common/Loader";
 import { registerUser } from "@/services/auth";
 import { sendOTP, verifyOTP } from "@/services/user/otp";
 import { validateOTP } from "@/lib/validators";
@@ -28,6 +27,7 @@ import {
   LoginFormValues,
   OtpFormValues
 } from "./hooks/use-auth-validation";
+import { useLoading } from "@/components/loading/LoadingContext";
 
 const AuthModal = ({
   name,
@@ -37,6 +37,7 @@ const AuthModal = ({
   onCloseModal?: () => void;
 }) => {
   const responsiveToast = useResponsiveToast();
+  const { startLoading, stopLoading } = useLoading();
   const [isLoading, startTransition] = useTransition();
   const [title, setTitle] = useState(name || "");
   const [isOTPModal, setIsOTPModal] = useState(false);
@@ -100,6 +101,9 @@ const AuthModal = ({
   const onSubmit = (data: any) => {
     const { email, password, name, otp } = data;
 
+    // Immediately trigger high-fidelity Kerby loading overlay
+    startLoading('auth');
+
     startTransition(async () => {
       try {
         if (isOTPModal) {
@@ -108,6 +112,7 @@ const AuthModal = ({
               // Client-side validation for OTP
               const otpError = validateOTP(otp);
               if (otpError) {
+                stopLoading();
                 setError("otp", { message: otpError });
                 return;
               }
@@ -123,8 +128,18 @@ const AuthModal = ({
               setTitle("Login");
               setOtpAttemptLimitReached(false);
               setLockoutCountdown(0);
-              reset();
+              reset({
+                email: userEmail,
+                password: "",
+                name: "",
+                otp: "",
+              });
+              // Keep overlay smoothly for transition then finish
+              setTimeout(() => {
+                stopLoading();
+              }, 800);
             } catch (error: any) {
+              stopLoading();
               // Check if OTP attempt limit was reached and extract countdown
               const countdownMatch = error.message.match(/Please try again in (\d+) second\(s\)/);
               if (countdownMatch) {
@@ -163,6 +178,7 @@ const AuthModal = ({
             targetUrl.includes("/auth/suspended") || 
             targetError.includes("AccountSuspended")
           ) {
+            stopLoading();
             onCloseModal?.();
             window.location.href = `/api/auth/error?error=AccountSuspended:${encodeURIComponent(email)}`;
             return;
@@ -173,6 +189,7 @@ const AuthModal = ({
             targetUrl.includes("/auth/banned") || 
             targetError.includes("AccountBanned")
           ) {
+            stopLoading();
             onCloseModal?.();
             window.location.href = `/api/auth/error?error=AccountBanned:${encodeURIComponent(email)}`;
             return;
@@ -183,6 +200,7 @@ const AuthModal = ({
             targetUrl.includes("/auth/locked") || 
             targetError.includes("AccountLocked")
           ) {
+            stopLoading();
             responsiveToast.error(
               "Access Denied: Your account is currently under a 24-hour security lock due to multiple failed OTP attempts. Please try again later or contact support.",
               { duration: 5000 }
@@ -195,6 +213,7 @@ const AuthModal = ({
           }
 
           if (callback?.error) {
+            stopLoading();
             // If login failed because email is not verified, open OTP modal
             if (callback.error.includes("Email not verified")) {
               setUserEmail(email);
@@ -205,10 +224,10 @@ const AuthModal = ({
               throw new Error(callback.error);
             }
           } else if (callback?.ok) {
+            onCloseModal?.();
             responsiveToast.success("You've successfully logged in.", {
               duration: 3000,
             });
-            onCloseModal?.();
 
             // Fetch fresh user role with cache-busting to determine post-login redirect
             let role: string | undefined;
@@ -236,6 +255,9 @@ const AuthModal = ({
               router.refresh();
             } else {
               router.refresh(); // Default to refresh for regular tenants
+              setTimeout(() => {
+                stopLoading();
+              }, 700);
             }
           }
         } else {
@@ -243,15 +265,18 @@ const AuthModal = ({
           const result = await registerUser({ email, password, name });
           
           if (result?.error) {
+            stopLoading();
             throw new Error(result.error);
           }
 
+          stopLoading();
           setUserEmail(email);
           setIsOTPModal(true);
           setResendCooldown(30);
           responsiveToast.success("OTP sent to your email!");
         }
       } catch (error: any) {
+        stopLoading();
         if (error.message.includes("AccountLocked")) {
           const email = watch("email") || userEmail;
           responsiveToast.error(
@@ -453,10 +478,10 @@ const AuthModal = ({
                 <div className="mt-4 sm:mt-6">
                   <Button
                     type="submit"
-                    className="flex items-center justify-center h-[52px] sm:h-[46px] w-full rounded-2xl shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-white font-extrabold uppercase tracking-wider text-sm sm:text-sm cursor-pointer transition-all active:scale-[0.99]"
+                    className="flex items-center justify-center h-[52px] sm:h-[46px] w-full rounded-2xl shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-white font-extrabold uppercase tracking-wider text-sm sm:text-sm cursor-pointer transition-all active:scale-[0.99] disabled:opacity-80"
                     disabled={isLoading || !watch("otp") || watch("otp").length !== 6 || otpAttemptLimitReached}
                   >
-                    {isLoading ? <SpinnerMini className="w-5 h-5" /> : "Verify Identity"}
+                    Verify Identity
                   </Button>
                 </div>
             </>
@@ -521,9 +546,10 @@ const AuthModal = ({
 
               <Button
                 type="submit"
-                className="flex items-center justify-center h-[52px] sm:h-[46px] w-full rounded-2xl shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-white font-extrabold uppercase tracking-wider text-sm sm:text-sm cursor-pointer transition-all active:scale-[0.99]"
+                disabled={isLoading}
+                className="flex items-center justify-center h-[52px] sm:h-[46px] w-full rounded-2xl shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-white font-extrabold uppercase tracking-wider text-sm sm:text-sm cursor-pointer transition-all active:scale-[0.99] disabled:opacity-80"
               >
-                {isLoading ? <SpinnerMini className="w-5 h-5" /> : "Continue"}
+                Continue
               </Button>
             </>
           )}
@@ -540,6 +566,8 @@ const AuthModal = ({
               outline
               onClick={async () => {
                 setIsOAuthLoading(true);
+                startLoading('auth');
+                onCloseModal?.();
                 const returnUrl = `${window.location.pathname}${window.location.search}`;
                 signIn("google", { callbackUrl: returnUrl });
               }}
@@ -548,14 +576,15 @@ const AuthModal = ({
             >
               <FcGoogle className="w-6 h-6 sm:w-5 sm:h-5 shrink-0" />
               <span className="text-sm sm:text-sm font-bold">
-                {isOAuthLoading ? "Signing in..." : "Continue with Google"}
+                Continue with Google
               </span>
-              {isOAuthLoading && <SpinnerMini className="w-4 h-4" />}
             </Button>
             <Button
               outline
               onClick={async () => {
                 setIsOAuthLoading(true);
+                startLoading('auth');
+                onCloseModal?.();
                 const returnUrl = `${window.location.pathname}${window.location.search}`;
                 signIn("facebook", { callbackUrl: returnUrl });
               }}
@@ -564,9 +593,8 @@ const AuthModal = ({
             >
               <FaFacebook className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 shrink-0" />
               <span className="text-sm sm:text-sm font-bold">
-                {isOAuthLoading ? "Signing in..." : "Continue with Facebook"}
+                Continue with Facebook
               </span>
-              {isOAuthLoading && <SpinnerMini className="w-4 h-4" />}
             </Button>
             <div className="text-neutral-500 dark:text-gray-400 text-center mt-3 sm:mt-2 pb-2">
               <div className="flex items-center justify-center flex-wrap gap-1 text-sm sm:text-xs">

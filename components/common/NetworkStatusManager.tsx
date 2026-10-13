@@ -6,7 +6,6 @@ import { WifiOff, Wifi, RefreshCcw, SignalLow, CheckCircle2, X } from "lucide-re
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import { useRouter } from "next/navigation";
 import { ErrorPageMascotPanel } from "@/components/error/ErrorPageMascotPanel";
-import { KERBY_OFFLINE_DATA_URI } from "./kerbyOfflineDataUri";
 
 export function NetworkStatusManager() {
   const isOnline = useNetworkStatus();
@@ -53,7 +52,7 @@ export function NetworkStatusManager() {
           {/* Left Column: Kerby Hero Mascot Panel */}
           <div className="lg:col-span-5 xl:col-span-5 flex flex-col h-full min-h-[320px] sm:min-h-[420px]">
             <ErrorPageMascotPanel
-              imageSrc={KERBY_OFFLINE_DATA_URI}
+              imageSrc="/assets/mascot/kerby-offline.png"
               altText="Kerby No Internet Mascot"
               speechText="Uh oh! I lost connection to the BoardTAU network! Please check your Wi-Fi or cellular settings."
               speechIcon={<WifiOff className="w-4 h-4 text-[#2f7d6d] dark:text-emerald-400" />}

@@ -87,14 +87,14 @@ export default function LandlordSidebar() {
         {/* ── Header: Brand & Logo ── */}
         <Button
           className={cn(
-            "transition-transform ease-in-out duration-300 mb-1 justify-start px-3 hover:no-underline",
-            !isOpen ? "translate-x-1" : "translate-x-0"
+            "transition-transform ease-in-out duration-300 mb-1 hover:no-underline w-full",
+            !isOpen ? "justify-center px-0 translate-x-0" : "justify-start px-3 translate-x-0"
           )}
           variant="link"
           asChild
         >
-          <Link href="/landlord" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20 mr-1 shadow-2xs">
+          <Link href="/landlord" className={cn("flex items-center", !isOpen ? "justify-center" : "gap-2.5")}>
+            <div className={cn("w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20 shadow-2xs", !isOpen ? "mr-0" : "mr-1")}>
               <Image
                 src="/logo.png"
                 alt="BoardTAU"
@@ -105,21 +105,16 @@ export default function LandlordSidebar() {
                 unoptimized
               />
             </div>
-            <div
-              className={cn(
-                "flex flex-col whitespace-nowrap overflow-hidden transition-[transform,opacity,display] ease-in-out duration-300",
-                !isOpen
-                  ? "-translate-x-96 opacity-0 hidden"
-                  : "translate-x-0 opacity-100"
-              )}
-            >
-              <span className="font-extrabold text-[17px] tracking-tight text-gray-900 dark:text-white leading-none">
-                BoardTAU
-              </span>
-              <span className="text-[11px] font-bold text-primary uppercase tracking-wider mt-1">
-                Landlord Portal
-              </span>
-            </div>
+            {isOpen && (
+              <div className="flex flex-col whitespace-nowrap overflow-hidden transition-[transform,opacity,display] ease-in-out duration-300 translate-x-0 opacity-100">
+                <span className="font-extrabold text-[17px] tracking-tight text-gray-900 dark:text-white leading-none">
+                  BoardTAU
+                </span>
+                <span className="text-[11px] font-bold text-primary uppercase tracking-wider mt-1">
+                  Landlord Portal
+                </span>
+              </div>
+            )}
           </Link>
         </Button>
 

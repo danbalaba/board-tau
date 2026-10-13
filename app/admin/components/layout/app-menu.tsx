@@ -131,19 +131,19 @@ export function AppMenu({ isOpen, onItemClick }: MenuProps) {
 
   return (
     <ScrollArea className="[&>div>div[style]]:!block flex-1">
-      <nav className="mt-8 h-full w-full">
-        <ul className="flex flex-col min-h-[calc(100vh-48px-36px-16px-32px)] lg:min-h-[calc(100vh-32px-40px-32px)] items-start space-y-1.5 px-2">
-          {menuGroups.map(({ groupLabel, menus }, index) => (
-            <li className={cn("w-full", groupLabel ? "pt-5" : "")} key={index}>
-              {(isOpen && groupLabel) || isOpen === undefined ? (
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-3.5 pb-2.5 max-w-[248px] truncate">
-                  {groupLabel}
-                </p>
-              ) : !isOpen && isOpen !== undefined && groupLabel ? (
-                <TooltipProvider>
+      <TooltipProvider delayDuration={100} skipDelayDuration={100} disableHoverableContent>
+        <nav className="mt-8 h-full w-full">
+          <ul className="flex flex-col min-h-[calc(100vh-48px-36px-16px-32px)] lg:min-h-[calc(100vh-32px-40px-32px)] items-start space-y-1.5 px-2">
+            {menuGroups.map(({ groupLabel, menus }, index) => (
+              <li className={cn("w-full", groupLabel ? "pt-5" : "")} key={index}>
+                {(isOpen && groupLabel) || isOpen === undefined ? (
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-3.5 pb-2.5 max-w-[248px] truncate">
+                    {groupLabel}
+                  </p>
+                ) : !isOpen && isOpen !== undefined && groupLabel ? (
                   <Tooltip delayDuration={100}>
-                    <TooltipTrigger className="w-full">
-                      <div className="w-full flex justify-center items-center">
+                    <TooltipTrigger className="w-full" asChild>
+                      <div className="w-full flex justify-center items-center py-1 cursor-default">
                         <Ellipsis className="h-5 w-5 text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary transition-colors" />
                       </div>
                     </TooltipTrigger>
@@ -151,26 +151,24 @@ export function AppMenu({ isOpen, onItemClick }: MenuProps) {
                       <p>{groupLabel}</p>
                     </TooltipContent>
                   </Tooltip>
-                </TooltipProvider>
-              ) : (
-                <p className="pb-2"></p>
-              )}
-              {menus.map((item, itemIndex) => {
-                const Icon = item.icon ? Icons[item.icon] : Icons.logo;
-                const hasSubmenus = Boolean(item.items && item.items.length > 0);
-                const isActive =
-                  pathname === item.url ||
-                  (hasSubmenus &&
-                    Boolean(
-                      item.items?.some(
-                        (sub) => pathname === sub.url || pathname.startsWith(sub.url + '/')
-                      )
-                    ));
+                ) : (
+                  <p className="pb-2"></p>
+                )}
+                {menus.map((item, itemIndex) => {
+                  const Icon = item.icon ? Icons[item.icon] : Icons.logo;
+                  const hasSubmenus = Boolean(item.items && item.items.length > 0);
+                  const isActive =
+                    pathname === item.url ||
+                    (hasSubmenus &&
+                      Boolean(
+                        item.items?.some(
+                          (sub) => pathname === sub.url || pathname.startsWith(sub.url + '/')
+                        )
+                      ));
 
-                if (!hasSubmenus) {
-                  return (
-                    <div className="w-full" key={itemIndex}>
-                      <TooltipProvider disableHoverableContent>
+                  if (!hasSubmenus) {
+                    return (
+                      <div className="w-full flex justify-center" key={itemIndex}>
                         <Tooltip delayDuration={100}>
                           <TooltipTrigger asChild>
                             <Button
@@ -184,25 +182,27 @@ export function AppMenu({ isOpen, onItemClick }: MenuProps) {
                               )}
                               asChild
                             >
-                              <Link href={item.url} onClick={onItemClick}>
+                              <Link 
+                                href={item.url} 
+                                onClick={(e) => {
+                                  onItemClick?.();
+                                  (e.currentTarget as HTMLElement)?.blur();
+                                }}
+                                className={cn("flex items-center", isOpen === false ? "justify-center w-full" : "w-full")}
+                              >
                                 <span
                                   className={cn(
-                                    isOpen === false ? "" : "mr-3.5",
+                                    isOpen === false ? "flex items-center justify-center shrink-0" : "mr-3.5 shrink-0",
                                     isActive ? "text-white" : "text-slate-500 dark:text-slate-400 group-hover:text-primary"
                                   )}
                                 >
                                   <Icon size={20} />
                                 </span>
-                                <p
-                                  className={cn(
-                                    "max-w-[200px] truncate text-sm font-semibold",
-                                    isOpen === false
-                                      ? "-translate-x-96 opacity-0"
-                                      : "translate-x-0 opacity-100"
-                                  )}
-                                >
-                                  {item.title}
-                                </p>
+                                {isOpen ? (
+                                  <p className="max-w-[200px] truncate text-sm font-semibold translate-x-0 opacity-100">
+                                    {item.title}
+                                  </p>
+                                ) : null}
                               </Link>
                             </Button>
                           </TooltipTrigger>
@@ -212,52 +212,50 @@ export function AppMenu({ isOpen, onItemClick }: MenuProps) {
                             </TooltipContent>
                           )}
                         </Tooltip>
-                      </TooltipProvider>
+                      </div>
+                    );
+                  }
+
+                  // Submenu / Collapsible item
+                  const submenus = (item.items || []).map(sub => ({
+                    href: sub.url,
+                    label: sub.title,
+                  }));
+
+                  return (
+                    <div className="w-full" key={itemIndex}>
+                      <CollapseMenuButton
+                        icon={Icon}
+                        label={item.title}
+                        active={isActive}
+                        submenus={submenus}
+                        isOpen={isOpen}
+                      />
                     </div>
                   );
-                }
+                })}
+              </li>
+            ))}
 
-                // Submenu / Collapsible item
-                const submenus = (item.items || []).map(sub => ({
-                  href: sub.url,
-                  label: sub.title,
-                }));
-
-                return (
-                  <div className="w-full" key={itemIndex}>
-                    <CollapseMenuButton
-                      icon={Icon}
-                      label={item.title}
-                      active={isActive}
-                      submenus={submenus}
-                      isOpen={isOpen}
+            {/* Bottom Footer Section: Dynamic Kerby Mascot Tips + Sign Out Button */}
+            <li className="w-full grow flex flex-col justify-end pt-6 pb-2">
+              {/* Kerby Admin Assistant Card (Role-Aware) */}
+              {activeTip && (
+                <div className="w-full mb-3">
+                  {isOpen ? (
+                    <KerbyMascot
+                      variant="sidebar"
+                      pose={activeTip.pose}
+                      outfitMode="casual"
+                      guideTitle={activeRole === 'SUPER_ADMIN' ? 'Kerby Super Admin' : 'Kerby Admin Guide'}
+                      guideType="admin"
+                      customAssetSrc={activeTip.asset}
+                      speechText={activeTip.speech}
+                      badgeLabel={activeTip.badge}
+                      onNextTip={() => setTipIndex((prev) => (prev + 1) % currentPool.length)}
                     />
-                  </div>
-                );
-              })}
-            </li>
-          ))}
-
-          {/* Bottom Footer Section: Dynamic Kerby Mascot Tips + Sign Out Button */}
-          <li className="w-full grow flex flex-col justify-end pt-6 pb-2">
-            {/* Kerby Admin Assistant Card (Role-Aware) */}
-            {activeTip && (
-              <div className="w-full mb-3">
-                {isOpen ? (
-                  <KerbyMascot
-                    variant="sidebar"
-                    pose={activeTip.pose}
-                    outfitMode="casual"
-                    guideTitle={activeRole === 'SUPER_ADMIN' ? 'Kerby Super Admin' : 'Kerby Admin Guide'}
-                    guideType="admin"
-                    customAssetSrc={activeTip.asset}
-                    speechText={activeTip.speech}
-                    badgeLabel={activeTip.badge}
-                    onNextTip={() => setTipIndex((prev) => (prev + 1) % currentPool.length)}
-                  />
-                ) : (
-                  <div className="flex flex-col items-center justify-center w-full my-2">
-                    <TooltipProvider>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center w-full my-2">
                       <Tooltip delayDuration={100}>
                         <TooltipTrigger asChild>
                           <div className="w-11 h-11 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 shadow-xs hover:scale-110 transition-all duration-300 cursor-pointer relative group/brand overflow-visible">
@@ -281,50 +279,53 @@ export function AppMenu({ isOpen, onItemClick }: MenuProps) {
                           </p>
                         </TooltipContent>
                       </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                )}
-              </div>
-            )}
+                    </div>
+                  )}
+                </div>
+              )}
 
-            {/* Sign Out Button */}
-            <TooltipProvider disableHoverableContent>
-              <Tooltip delayDuration={100}>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={() => {
-                      onItemClick?.();
-                      setShowLogoutConfirm(true);
-                    }}
-                    variant="outline"
-                    className={cn(
-                      "w-full h-11 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-950/30 dark:hover:text-red-400 dark:hover:border-red-900/50 text-slate-700 dark:text-slate-300 shadow-xs transition-all rounded-xl",
-                      isOpen === false ? "justify-center px-0" : "justify-center px-4"
-                    )}
-                  >
-                    <span className={cn(isOpen === false ? "" : "mr-3", "text-slate-500 dark:text-slate-400 group-hover:text-red-500")}>
-                      <LogOut size={20} />
-                    </span>
-                    <p
+              {/* Sign Out Button */}
+              <div className="w-full flex justify-center">
+                <Tooltip delayDuration={100}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={(e) => {
+                        onItemClick?.();
+                        (e.currentTarget as HTMLElement)?.blur();
+                        setShowLogoutConfirm(true);
+                      }}
+                      variant="outline"
                       className={cn(
-                        "whitespace-nowrap font-semibold text-sm",
-                        isOpen === false ? "opacity-0 hidden" : "opacity-100"
+                        "w-full h-11 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-950/30 dark:hover:text-red-400 dark:hover:border-red-900/50 text-slate-700 dark:text-slate-300 shadow-xs transition-all rounded-xl",
+                        isOpen === false ? "justify-center px-0" : "justify-center px-4"
                       )}
                     >
-                      Sign out
-                    </p>
-                  </Button>
-                </TooltipTrigger>
-                {isOpen === false && (
-                  <TooltipContent side="right">
-                    <p>Sign out</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
-          </li>
-        </ul>
-      </nav>
+                      <span
+                        className={cn(
+                          isOpen === false ? "flex items-center justify-center shrink-0 mr-0" : "mr-3 shrink-0",
+                          "text-slate-500 dark:text-slate-400 group-hover:text-red-500"
+                        )}
+                      >
+                        <LogOut size={20} />
+                      </span>
+                      {isOpen ? (
+                        <p className="whitespace-nowrap font-semibold text-sm">
+                          Sign out
+                        </p>
+                      ) : null}
+                    </Button>
+                  </TooltipTrigger>
+                  {isOpen === false && (
+                    <TooltipContent side="right">
+                      <p>Sign out</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </div>
+            </li>
+          </ul>
+        </nav>
+      </TooltipProvider>
 
       {/* Logout Confirmation Modal */}
       <Modal 

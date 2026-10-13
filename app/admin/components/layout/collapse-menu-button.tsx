@@ -15,7 +15,6 @@ import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
-  TooltipProvider,
 } from '../ui/tooltip';
 import {
   DropdownMenu,
@@ -143,43 +142,28 @@ export function CollapseMenuButton({
     </Collapsible>
   ) : (
     <DropdownMenu>
-      <TooltipProvider disableHoverableContent>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className={cn(
-                  "w-full h-11 mb-1.5 transition-all rounded-xl",
-                  isOpen === false ? "justify-center px-0" : "justify-start px-3.5",
-                  isSubmenuActive
-                    ? "bg-primary text-white shadow-xs shadow-primary/25 hover:bg-primary/90 hover:text-white font-semibold"
-                    : "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10 font-medium"
-                )}
-              >
-                <div className="w-full items-center flex justify-between">
-                  <div className="flex items-center">
-                    <span className={cn(isOpen === false ? "" : "mr-3.5", isSubmenuActive ? "text-white" : "text-gray-500 dark:text-gray-400 group-hover:text-primary")}>
-                      <Icon size={20} />
-                    </span>
-                    <p
-                      className={cn(
-                        "max-w-[200px] truncate text-sm font-semibold",
-                        isOpen === false ? "opacity-0" : "opacity-100"
-                      )}
-                    >
-                      {label}
-                    </p>
-                  </div>
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent side="right" align="start" alignOffset={2}>
-            {label}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip delayDuration={100}>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full h-11 mb-1.5 transition-all rounded-xl justify-center px-0",
+                isSubmenuActive
+                  ? "bg-primary text-white shadow-xs shadow-primary/25 hover:bg-primary/90 hover:text-white font-semibold"
+                  : "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10 font-medium"
+              )}
+            >
+              <span className={cn("flex items-center justify-center shrink-0", isSubmenuActive ? "text-white" : "text-gray-500 dark:text-gray-400 group-hover:text-primary")}>
+                <Icon size={20} />
+              </span>
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="right" align="start" alignOffset={2}>
+          {label}
+        </TooltipContent>
+      </Tooltip>
       <DropdownMenuContent side="right" sideOffset={25} align="start" className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 shadow-xl rounded-xl p-1.5 min-w-[180px]">
         <DropdownMenuLabel className="max-w-[190px] truncate text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-2 py-1.5">
           {label}
@@ -197,6 +181,9 @@ export function CollapseMenuButton({
                     : "text-slate-700 dark:text-slate-300 hover:bg-primary/5 hover:text-primary dark:hover:bg-slate-800/60 dark:hover:text-white"
                 )}
                 href={href}
+                onClick={(e) => {
+                  (e.currentTarget as HTMLElement)?.blur();
+                }}
               >
                 <p className="max-w-[180px] truncate">{subLabel}</p>
               </Link>
