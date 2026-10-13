@@ -46,11 +46,15 @@ const GlobalLoadingOverlay: React.FC = () => {
     if (isLoading) {
       preloadKerbyAssets();
       setShouldRender(true);
-      loadingStartTimeRef.current = Date.now();
-      startPathRef.current = `${pathname}?${searchParams?.toString() || ""}`;
+      if (!loadingStartTimeRef.current) {
+        loadingStartTimeRef.current = Date.now();
+        startPathRef.current = `${pathname}?${searchParams?.toString() || ""}`;
+      }
       setPoseIdx((prev) => (prev + 1) % poses.length);
       setTipIdx(0);
     } else {
+      loadingStartTimeRef.current = 0;
+      startPathRef.current = "";
       if (shouldRender) {
         // When isLoading becomes false, smoothly snap progress to 100% then dismiss
         setProgress(100);
@@ -60,7 +64,7 @@ const GlobalLoadingOverlay: React.FC = () => {
         return () => clearTimeout(timer);
       }
     }
-  }, [isLoading, pathname, searchParams, shouldRender, poses.length]);
+  }, [isLoading, shouldRender, poses.length]);
 
   // Rotate tips periodically while overlay is visible
   useEffect(() => {

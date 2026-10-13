@@ -117,7 +117,7 @@ export default function MapFiltersOverlay({
       
       let paramsToCache: Record<string, string> = {};
 
-      if (data.params) {
+      if (data.params && Object.keys(data.params).length > 0) {
         if (data.params.q) { params.set('q', data.params.q); paramsToCache.q = data.params.q; }
         if (data.params.maxPrice) { params.set('maxPrice', data.params.maxPrice.toString()); paramsToCache.maxPrice = data.params.maxPrice.toString(); }
         if (data.params.amenities && data.params.amenities.length > 0) { params.set('amenities', data.params.amenities); paramsToCache.amenities = data.params.amenities; }

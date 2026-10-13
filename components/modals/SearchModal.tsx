@@ -345,18 +345,14 @@ export default function SearchModal({
         onCloseModal?.();
         router.push(`/?${data.rawParamsString}`);
       } else {
-        toast({
-          title: "Search failed",
-          description: data.error || "Could not process AI search query",
-          variant: "destructive",
-        });
+        // Graceful fallback to text search query if AI returned empty parameters
+        onCloseModal?.();
+        router.push(`/?q=${encodeURIComponent(query)}`);
       }
     } catch (err) {
-      toast({
-        title: "Error",
-        description: "Network connection error",
-        variant: "destructive",
-      });
+      // Graceful fallback on network glitch
+      onCloseModal?.();
+      router.push(`/?q=${encodeURIComponent(query)}`);
     } finally {
       setIsAiLoading(false);
     }

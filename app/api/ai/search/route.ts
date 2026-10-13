@@ -33,6 +33,96 @@ const aiResponseSchema = z.object({
   features: z.array(z.string()).optional(),
 });
 
+function extractFallbackParams(
+  query: string,
+  colleges: any[] = [],
+  attributes: any[] = []
+): URLSearchParams {
+  const urlParams = new URLSearchParams();
+  const qLower = query.toLowerCase();
+
+  // Extract price
+  const priceMatch = qLower.match(/\b\d{3,5}\b/);
+  if (priceMatch) {
+    urlParams.set('maxPrice', priceMatch[0]);
+  } else if (qLower.includes('cheap') || qLower.includes('budget') || qLower.includes('affordable')) {
+    urlParams.set('maxPrice', '3000');
+  }
+
+  // Extract room type
+  if (qLower.includes('solo') || qLower.includes('single')) urlParams.set('roomType', 'SOLO');
+  else if (qLower.includes('bedspace') || qLower.includes('shared')) urlParams.set('roomType', 'BEDSPACE');
+  else if (qLower.includes('studio')) urlParams.set('roomType', 'Studio Unit');
+
+  // Extract categories
+  const categories: string[] = [];
+  if (qLower.includes('apartment') || qLower.includes('apt')) categories.push('Apartment');
+  if (qLower.includes('dorm') || qLower.includes('dormitory')) categories.push('Dormitory');
+  if (qLower.includes('boarding house') || qLower.includes('bh')) categories.push('Boarding House');
+  if (qLower.includes('transient')) categories.push('Transient House');
+  if (categories.length > 0) {
+    urlParams.set('categories', categories.join(','));
+  }
+
+  // Extract distance & location proximity fallback
+  const kmMatch = qLower.match(/\b(\d+(?:\.\d+)?)\s*km\b/);
+  const meterMatch = qLower.match(/\b(\d+)\s*m\b/);
+  if (kmMatch) {
+    urlParams.set('distance', kmMatch[1]);
+  } else if (meterMatch) {
+    urlParams.set('distance', (Number(meterMatch[1]) / 1000).toString());
+  } else if (qLower.includes('walking distance') || qLower.includes('walkable')) {
+    urlParams.set('distance', '1');
+  } else if (qLower.includes('near') || qLower.includes('close to')) {
+    urlParams.set('distance', '1.5');
+  }
+
+  // Match Colleges/Landmarks
+  if (colleges.length > 0) {
+    const collegeMatch = colleges.find((c: any) =>
+      c.code && qLower.includes(c.code.toLowerCase())
+    );
+    if (collegeMatch) {
+      urlParams.set('college', collegeMatch.code);
+      if (typeof collegeMatch.latitude === "number" && typeof collegeMatch.longitude === "number") {
+        urlParams.set('originLat', collegeMatch.latitude.toString());
+        urlParams.set('originLng', collegeMatch.longitude.toString());
+        urlParams.set('collegeCode', collegeMatch.code);
+      }
+    }
+  }
+
+  // Extract basic amenities
+  const foundAmenities: string[] = [];
+  if (qLower.includes('wifi') || qLower.includes('internet')) foundAmenities.push('WiFi');
+  if (qLower.includes('ac') || qLower.includes('aircon') || qLower.includes('air conditioning')) foundAmenities.push('Air Conditioning');
+  if (qLower.includes('parking') || qLower.includes('garage')) foundAmenities.push('Parking');
+  if (qLower.includes('kitchen') || qLower.includes('cook')) foundAmenities.push('Kitchen');
+
+  if (foundAmenities.length > 0) {
+    urlParams.set('amenities', foundAmenities.join(','));
+  }
+
+  // Clean keywords for 'q'
+  const stopWords = [
+    "find", "me", "a", "an", "the", "looking", "for", "under", "max", "below",
+    "with", "has", "have", "and", "in", "at", "boarding", "house", "places",
+    "place", "near", "close", "to", "walking", "distance", "tau", "room", "rooms"
+  ];
+  const cleanQ = qLower.split(/\s+/)
+    .filter(word => !stopWords.includes(word) && !/^\d+$/.test(word))
+    .join(" ")
+    .trim();
+
+  if (cleanQ) {
+    urlParams.set('q', cleanQ);
+  } else if (!urlParams.get('categories') && !urlParams.get('roomType') && !urlParams.get('college')) {
+    urlParams.set('q', query.trim());
+  }
+
+  return urlParams;
+}
+
 export async function POST(request: Request) {
   let query = "";
   try {
@@ -116,84 +206,93 @@ If a value is not mentioned, omit the key. Do not include markdown codeblocks.
       spanName: "ai_search",
     });
 
-    const validatedData = aiResult.data || {};
+    let urlParams = new URLSearchParams();
+    const validatedData = aiResult.data;
 
-    // Convert the validated object into flat URLSearchParams format for the frontend
-    const urlParams = new URLSearchParams();
-    if (validatedData.q) urlParams.set('q', validatedData.q);
-    if (validatedData.minPrice) urlParams.set('minPrice', validatedData.minPrice.toString());
-    if (validatedData.maxPrice) urlParams.set('maxPrice', validatedData.maxPrice.toString());
-    if (validatedData.roomType) urlParams.set('roomType', validatedData.roomType);
+    if (validatedData && Object.keys(validatedData).length > 0) {
+      if (validatedData.q) urlParams.set('q', validatedData.q);
+      if (validatedData.minPrice) urlParams.set('minPrice', validatedData.minPrice.toString());
+      if (validatedData.maxPrice) urlParams.set('maxPrice', validatedData.maxPrice.toString());
+      if (validatedData.roomType) urlParams.set('roomType', validatedData.roomType);
 
-    // 1. Location & Real-World GIS Road Calculation Resolution
-    let extractedDistance = validatedData.distance;
-    if (!extractedDistance && (validatedData.isWalkingDistance || normalizedQuery.includes('walking distance') || normalizedQuery.includes('walkable'))) {
-      extractedDistance = 1.0; // Default 1km walking distance threshold
-    } else if (!extractedDistance && (normalizedQuery.includes('near') || normalizedQuery.includes('close to'))) {
-      extractedDistance = 1.5; // Default 1.5km proximity threshold
-    }
-
-    if (extractedDistance) {
-      urlParams.set('distance', extractedDistance.toString());
-    }
-
-    if (validatedData.college) {
-      urlParams.set('college', validatedData.college);
-      const cleanColQuery = validatedData.college.toLowerCase().trim();
-      const collegeMatch = colleges.find((c: any) => 
-        c.code?.toLowerCase() === cleanColQuery ||
-        c.name?.toLowerCase().includes(cleanColQuery) ||
-        cleanColQuery.includes(c.code?.toLowerCase() || "")
-      );
-
-      if (collegeMatch && typeof collegeMatch.latitude === "number" && typeof collegeMatch.longitude === "number") {
-        urlParams.set('originLat', collegeMatch.latitude.toString());
-        urlParams.set('originLng', collegeMatch.longitude.toString());
-        urlParams.set('collegeCode', collegeMatch.code);
-
-        // Apply GIS Road Winding Factor (1.15x for walking <1km, 1.35x for road routes >1km)
-        const targetDist = extractedDistance || 1.5;
-        const roadFactor = targetDist < 1 ? 1.15 : 1.35;
-        const estimatedRoadDistanceKm = Number((targetDist * roadFactor).toFixed(2));
-        const estimatedWalkMin = Math.ceil((estimatedRoadDistanceKm * 1000) / 80); // ~80m/min walking speed
-
-        urlParams.set('roadDistanceKm', estimatedRoadDistanceKm.toString());
-        urlParams.set('estimatedWalkMin', estimatedWalkMin.toString());
+      // 1. Location & Real-World GIS Road Calculation Resolution
+      let extractedDistance = validatedData.distance;
+      if (!extractedDistance && (validatedData.isWalkingDistance || normalizedQuery.includes('walking distance') || normalizedQuery.includes('walkable'))) {
+        extractedDistance = 1.0; // Default 1km walking distance threshold
+      } else if (!extractedDistance && (normalizedQuery.includes('near') || normalizedQuery.includes('close to'))) {
+        extractedDistance = 1.5; // Default 1.5km proximity threshold
       }
-    }
-    
-    const selectedProps = validatedData.propertyTypes || validatedData.categories;
-    if (selectedProps && selectedProps.length > 0) {
-      urlParams.set('categories', selectedProps.join(','));
-    }
 
-    // 2. Dynamic Attribute Taxonomy Resolution (resolves names to Super Admin attribute IDs)
-    const combinedAttributeNames = [
-      ...(validatedData.amenities || []),
-      ...(validatedData.rules || []),
-      ...(validatedData.features || []),
-    ];
+      if (extractedDistance) {
+        urlParams.set('distance', extractedDistance.toString());
+      }
 
-    if (combinedAttributeNames.length > 0) {
-      urlParams.set('amenities', combinedAttributeNames.join(','));
-
-      const resolvedAttrIds: string[] = [];
-      combinedAttributeNames.forEach((nameStr: string) => {
-        const cleanName = nameStr.toLowerCase().trim();
-        const found = attributes.find((attr: any) =>
-          attr.name?.toLowerCase() === cleanName ||
-          attr.code?.toLowerCase() === cleanName ||
-          attr.value?.toLowerCase() === cleanName ||
-          cleanName.includes(attr.name?.toLowerCase() || "")
+      if (validatedData.college) {
+        urlParams.set('college', validatedData.college);
+        const cleanColQuery = validatedData.college.toLowerCase().trim();
+        const collegeMatch = colleges.find((c: any) => 
+          c.code?.toLowerCase() === cleanColQuery ||
+          c.name?.toLowerCase().includes(cleanColQuery) ||
+          cleanColQuery.includes(c.code?.toLowerCase() || "")
         );
-        if (found && found.id && !resolvedAttrIds.includes(found.id)) {
-          resolvedAttrIds.push(found.id);
-        }
-      });
 
-      if (resolvedAttrIds.length > 0) {
-        urlParams.set('attributes', resolvedAttrIds.join(','));
+        if (collegeMatch && typeof collegeMatch.latitude === "number" && typeof collegeMatch.longitude === "number") {
+          urlParams.set('originLat', collegeMatch.latitude.toString());
+          urlParams.set('originLng', collegeMatch.longitude.toString());
+          urlParams.set('collegeCode', collegeMatch.code);
+
+          // Apply GIS Road Winding Factor (1.15x for walking <1km, 1.35x for road routes >1km)
+          const targetDist = extractedDistance || 1.5;
+          const roadFactor = targetDist < 1 ? 1.15 : 1.35;
+          const estimatedRoadDistanceKm = Number((targetDist * roadFactor).toFixed(2));
+          const estimatedWalkMin = Math.ceil((estimatedRoadDistanceKm * 1000) / 80); // ~80m/min walking speed
+
+          urlParams.set('roadDistanceKm', estimatedRoadDistanceKm.toString());
+          urlParams.set('estimatedWalkMin', estimatedWalkMin.toString());
+        }
       }
+      
+      const selectedProps = validatedData.propertyTypes || validatedData.categories;
+      if (selectedProps && selectedProps.length > 0) {
+        urlParams.set('categories', selectedProps.join(','));
+      }
+
+      // 2. Dynamic Attribute Taxonomy Resolution (resolves names to Super Admin attribute IDs)
+      const combinedAttributeNames = [
+        ...(validatedData.amenities || []),
+        ...(validatedData.rules || []),
+        ...(validatedData.features || []),
+      ];
+
+      if (combinedAttributeNames.length > 0) {
+        urlParams.set('amenities', combinedAttributeNames.join(','));
+
+        const resolvedAttrIds: string[] = [];
+        combinedAttributeNames.forEach((nameStr: string) => {
+          const cleanName = nameStr.toLowerCase().trim();
+          const found = attributes.find((attr: any) =>
+            attr.name?.toLowerCase() === cleanName ||
+            attr.code?.toLowerCase() === cleanName ||
+            attr.value?.toLowerCase() === cleanName ||
+            cleanName.includes(attr.name?.toLowerCase() || "")
+          );
+          if (found && found.id && !resolvedAttrIds.includes(found.id)) {
+            resolvedAttrIds.push(found.id);
+          }
+        });
+
+        if (resolvedAttrIds.length > 0) {
+          urlParams.set('attributes', resolvedAttrIds.join(','));
+        }
+      }
+    } else {
+      // AI provider returned null/empty - seamless heuristic fallback!
+      urlParams = extractFallbackParams(query, colleges, attributes);
+    }
+
+    // Double check: if still empty, ensure q is preserved
+    if (urlParams.toString().length === 0 && query.trim().length > 0) {
+      urlParams.set('q', query.trim());
     }
 
     const finalResponse = {
@@ -203,59 +302,18 @@ If a value is not mentioned, omit the key. Do not include markdown codeblocks.
       provider: aiResult.provider,
     };
 
-    // Save to Redis Cache (30 days TTL)
-    await cache.set(cacheKey, finalResponse, 2592000);
+    // Save to Redis Cache ONLY if we extracted valid parameters.
+    // Genuine AI gets 30 days TTL; heuristic fallback gets 5 minutes TTL to allow AI recovery.
+    if (urlParams.toString().length > 0) {
+      const ttl = aiResult.provider === "fallback" ? 300 : 2592000;
+      await cache.set(cacheKey, finalResponse, ttl);
+    }
 
     return NextResponse.json(finalResponse);
 
   } catch (error: any) {
     console.error('[AI_MAP_SEARCH_ERROR]', error);
-    
-    // Fallback parser when AI fails
-    const urlParams = new URLSearchParams();
-    const qLower = query.toLowerCase();
-    
-    // Extract price
-    const priceMatch = qLower.match(/\b\d{3,5}\b/);
-    if (priceMatch) {
-      urlParams.set('maxPrice', priceMatch[0]);
-    }
-    
-    // Extract room type
-    if (qLower.includes('solo') || qLower.includes('single')) urlParams.set('roomType', 'SOLO');
-    if (qLower.includes('bedspace') || qLower.includes('shared')) urlParams.set('roomType', 'BEDSPACE');
-    if (qLower.includes('studio')) urlParams.set('roomType', 'Studio Unit');
-    if (qLower.includes('apartment')) urlParams.set('categories', 'Apartment');
-
-    // Extract distance & location proximity fallback
-    const kmMatch = qLower.match(/\b(\d+(?:\.\d+)?)\s*km\b/);
-    const meterMatch = qLower.match(/\b(\d+)\s*m\b/);
-    if (kmMatch) {
-      urlParams.set('distance', kmMatch[1]);
-    } else if (meterMatch) {
-      urlParams.set('distance', (Number(meterMatch[1]) / 1000).toString());
-    } else if (qLower.includes('walking distance') || qLower.includes('walkable')) {
-      urlParams.set('distance', '1');
-    } else if (qLower.includes('near') || qLower.includes('close to')) {
-      urlParams.set('distance', '1.5');
-    }
-    
-    // Extract basic amenities
-    const foundAmenities = [];
-    if (qLower.includes('wifi') || qLower.includes('internet')) foundAmenities.push('WiFi');
-    if (qLower.includes('ac') || qLower.includes('aircon')) foundAmenities.push('Air Conditioning');
-    
-    if (foundAmenities.length > 0) {
-      urlParams.set('amenities', foundAmenities.join(','));
-    }
-    
-    const stopWords = ["find", "me", "a", "looking", "for", "under", "max", "below", "with", "has", "have", "and", "boarding", "house", "places", "place", "near", "close", "to", "walking", "distance"];
-    const cleanQ = qLower.split(/\s+/)
-      .filter(word => !stopWords.includes(word) && !/^\d+$/.test(word))
-      .join(" ")
-      .trim();
-    if (cleanQ) urlParams.set('q', cleanQ);
-    
+    const urlParams = extractFallbackParams(query);
     return NextResponse.json({
       success: true,
       params: Object.fromEntries(urlParams.entries()),

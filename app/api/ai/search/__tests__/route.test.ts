@@ -81,5 +81,31 @@ describe('POST /api/ai/map-search', () => {
     expect(json.params.amenities).toBe('WiFi');
     expect(json.params.roomType).toBe('SOLO');
   }, 15000);
+
+  it('should gracefully fall back to heuristic extraction when AI provider returns null/fallback (e.g. Simon APT)', async () => {
+    const { generateAIResponse } = require('@/lib/ai/ai-provider');
+    (generateAIResponse as jest.Mock).mockResolvedValueOnce({
+      data: null,
+      rawText: '',
+      provider: 'fallback',
+    });
+
+    const req = new NextRequest('http://localhost/api/ai/search', {
+      method: 'POST',
+      body: JSON.stringify({
+        query: 'Simon APT',
+      }),
+    });
+
+    const res = await POST(req);
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.success).toBe(true);
+    expect(json.params.categories).toBe('Apartment');
+    expect(json.params.q).toBe('simon apt');
+    expect(json.rawParamsString).toContain('categories=Apartment');
+    expect(json.rawParamsString).toContain('q=simon+apt');
+  });
 });
 

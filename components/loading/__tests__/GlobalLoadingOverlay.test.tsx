@@ -31,8 +31,8 @@ const TestComponent = () => {
   const { startLoading, stopLoading } = useLoading();
   return (
     <div>
-      <button onClick={startLoading}>Start</button>
-      <button onClick={stopLoading}>Stop</button>
+      <button onClick={() => startLoading()}>Start</button>
+      <button onClick={() => stopLoading()}>Stop</button>
     </div>
   );
 };
@@ -55,7 +55,7 @@ describe('GlobalLoadingOverlay', () => {
         <GlobalLoadingOverlay />
       </LoadingProvider>
     );
-    expect(screen.queryByText(/BoardTAU Syncing/i)).not.toBeInTheDocument();
+    expect(screen.queryByAltText("BoardTAU Mascot")).not.toBeInTheDocument();
   });
 
   it('renders overlay when loading starts', () => {
@@ -70,7 +70,7 @@ describe('GlobalLoadingOverlay', () => {
       screen.getByText('Start').click();
     });
 
-    expect(screen.getByText(/Zooming to Route|BoardTAU Syncing/i)).toBeInTheDocument();
+    expect(screen.getByAltText("BoardTAU Mascot")).toBeInTheDocument();
   });
 
   it('hides overlay after minimum loading time', () => {
@@ -85,7 +85,7 @@ describe('GlobalLoadingOverlay', () => {
       screen.getByText('Start').click();
     });
 
-    expect(screen.getByText(/Zooming to Route|BoardTAU Syncing/i)).toBeInTheDocument();
+    expect(screen.getByAltText("BoardTAU Mascot")).toBeInTheDocument();
 
     // Trigger stop logic by simulating a path change
     (usePathname as jest.Mock).mockReturnValue('/new-page');
@@ -98,12 +98,12 @@ describe('GlobalLoadingOverlay', () => {
       </LoadingProvider>
     );
     
-    // Fast forward minimum loading time (800ms)
+    // Fast forward minimum loading time + exit animation (800ms + 200ms)
     act(() => {
-      jest.advanceTimersByTime(800);
+      jest.advanceTimersByTime(1200);
     });
 
-    expect(screen.queryByText(/Zooming to Route|BoardTAU Syncing/i)).not.toBeInTheDocument();
+    expect(screen.queryByAltText("BoardTAU Mascot")).not.toBeInTheDocument();
   });
 
   it('triggers fail-safe timeout', () => {
@@ -118,13 +118,13 @@ describe('GlobalLoadingOverlay', () => {
       screen.getByText('Start').click();
     });
 
-    expect(screen.getByText(/Zooming to Route|BoardTAU Syncing/i)).toBeInTheDocument();
+    expect(screen.getByAltText("BoardTAU Mascot")).toBeInTheDocument();
 
-    // Fast forward fail-safe time (5000ms)
+    // Fast forward fail-safe time (10000ms + 200ms exit animation)
     act(() => {
-      jest.advanceTimersByTime(5000);
+      jest.advanceTimersByTime(11000);
     });
 
-    expect(screen.queryByText(/Zooming to Route|BoardTAU Syncing/i)).not.toBeInTheDocument();
+    expect(screen.queryByAltText("BoardTAU Mascot")).not.toBeInTheDocument();
   });
 });

@@ -7,8 +7,8 @@ const TestComponent = () => {
   return (
     <div>
       <span data-testid="status">{isLoading ? 'Loading' : 'Idle'}</span>
-      <button onClick={startLoading}>Start</button>
-      <button onClick={stopLoading}>Stop</button>
+      <button onClick={() => startLoading()}>Start</button>
+      <button onClick={() => stopLoading()}>Stop</button>
     </div>
   );
 };
