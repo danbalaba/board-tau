@@ -214,6 +214,8 @@ model RoomImage {
   updatedAt DateTime @updatedAt
 
   room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
 }
 
 model PropertyType {
@@ -244,6 +246,8 @@ model RoomTypeDefinition {
   propertyType PropertyType         @relation(fields: [propertyTypeId], references: [id], onDelete: Cascade)
   bedSetups    BedSetupDefinition[]
   rooms        Room[]
+
+  @@index([propertyTypeId])
 }
 
 model BedSetupDefinition {
@@ -258,6 +262,8 @@ model BedSetupDefinition {
   displayOrder         Int                @default(0)
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
+
+  @@index([roomTypeDefinitionId])
 }
 
 model CampusCollege {
@@ -323,6 +329,7 @@ model Listing {
   @@index([status])
   @@index([price])
   @@index([propertyTypeId])
+  @@index([userId])
   @@index([status, price])
   @@index([status, createdAt(sort: Desc)])
 }
@@ -354,6 +361,10 @@ model Room {
   reservations       Reservation[]
 
   roomLinks RoomAttributeLink[]
+
+  @@index([listingId])
+  @@index([status])
+  @@index([roomTypeDefinitionId])
 }
 
 model Inquiry {
@@ -391,6 +402,7 @@ model Inquiry {
 
   @@index([listingId, status, createdAt])
   @@index([listingId, userId])
+  @@index([userId])
 }
 
 model Reservation {
@@ -427,6 +439,7 @@ model Reservation {
 
   @@index([listingId, status, paymentStatus])
   @@index([roomId, status])
+  @@index([userId])
 }
 
 model ListingImage {
@@ -439,6 +452,8 @@ model ListingImage {
   createdAt DateTime @default(now())
 
   listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
 }
 
 model Review {
@@ -584,6 +599,8 @@ model HostApplication {
   updatedAt      DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
 }
 
 model Notification {
@@ -673,6 +690,10 @@ model LeaseContract {
   landlord   User                @relation("landlordContracts", fields: [landlordId], references: [id], onDelete: Cascade)
   tenant     User?               @relation("tenantContracts", fields: [tenantId], references: [id], onDelete: Cascade)
   signatures ContractSignature[]
+
+  @@index([landlordId])
+  @@index([tenantId])
+  @@index([listingId])
 }
 
 model ContractSignature {
@@ -727,6 +748,9 @@ model DynamicAttribute {
 
   listingLinks ListingAttributeLink[]
   roomLinks    RoomAttributeLink[]
+
+  @@index([type, isActive])
+  @@index([subGroupKey])
 }
 
 model ListingAttributeLink {
@@ -738,6 +762,7 @@ model ListingAttributeLink {
   attribute DynamicAttribute @relation(fields: [attributeId], references: [id], onDelete: Restrict)
 
   @@unique([listingId, attributeId])
+  @@index([attributeId])
 }
 
 model RoomAttributeLink {
@@ -749,4 +774,5 @@ model RoomAttributeLink {
   attribute DynamicAttribute @relation(fields: [attributeId], references: [id], onDelete: Restrict)
 
   @@unique([roomId, attributeId])
+  @@index([attributeId])
 }

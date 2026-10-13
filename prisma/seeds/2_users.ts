@@ -48,14 +48,15 @@ export async function seedUsers(prisma: PrismaClient) {
     console.log("   ✓ System Admin (Moderator) exists.");
   }
 
-  // 3. Primary Landlord
-  const landlord1Email = "testlandlord@gmail.com";
-  const existingLandlord1 = await prisma.user.findUnique({ where: { email: landlord1Email } });
-  if (!existingLandlord1) {
+
+  // 3. Official Landlord Account (For real fieldwork data entry)
+  const officialLandlordEmail = "boardtau.official@gmail.com";
+  const existingOfficial = await prisma.user.findUnique({ where: { email: officialLandlordEmail } });
+  if (!existingOfficial) {
     await prisma.user.create({
       data: {
-        name: "TAU Student Housing Corp",
-        email: landlord1Email,
+        name: "BoardTAU Official Landlord",
+        email: officialLandlordEmail,
         password: defaultPassword,
         role: "LANDLORD",
         isVerifiedLandlord: true,
@@ -65,51 +66,8 @@ export async function seedUsers(prisma: PrismaClient) {
         lastLogin: new Date()
       }
     });
-    console.log("   ✓ Primary Landlord created.");
+    console.log("   ✓ Official Landlord created.");
   } else {
-    console.log("   ✓ Primary Landlord exists.");
-  }
-
-  // 3. Second Landlord
-  const landlord2Email = "rival.landlord@gmail.com";
-  const existingLandlord2 = await prisma.user.findUnique({ where: { email: landlord2Email } });
-  if (!existingLandlord2) {
-    await prisma.user.create({
-      data: {
-        name: "Rival Property Management",
-        email: landlord2Email,
-        password: defaultPassword,
-        role: "LANDLORD",
-        isVerifiedLandlord: true,
-        emailVerified: new Date(),
-        city: "Tarlac City",
-        region: "Tarlac",
-        lastLogin: new Date()
-      }
-    });
-    console.log("   ✓ Second Landlord created.");
-  } else {
-    console.log("   ✓ Second Landlord exists.");
-  }
-
-  // 4. Test Tenant User
-  const tenantEmail = "testuser@gmail.com";
-  const existingTenant = await prisma.user.findUnique({ where: { email: tenantEmail } });
-  if (!existingTenant) {
-    await prisma.user.create({
-      data: {
-        name: "Generic Test Student",
-        email: tenantEmail,
-        password: defaultPassword,
-        role: "USER",
-        emailVerified: new Date(),
-        city: "Camiling",
-        region: "Tarlac",
-        lastLogin: new Date()
-      }
-    });
-    console.log("   ✓ Test Tenant User created.");
-  } else {
-    console.log("   ✓ Test Tenant User exists.");
+    console.log("   ✓ Official Landlord exists.");
   }
 }
