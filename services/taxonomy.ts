@@ -48,7 +48,8 @@ export async function getAttributesByType(type: "AMENITY" | "RULE" | "FEATURE" |
     const allAttributes = await getActiveAttributes();
     return (allAttributes as any[]).filter(attr => attr.type === type);
   } catch (error) {
-    console.error("getAttributesByType error for type:", type, error);
+    const sanitizedType = String(type).replace(/[\r\n]/g, '').slice(0, 50);
+    console.error("getAttributesByType error for type:", sanitizedType, error);
     return [];
   }
 }
