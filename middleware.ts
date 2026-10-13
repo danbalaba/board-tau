@@ -3,9 +3,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { 
   strictLimiter, 
+  aiLimiter,
   publicLimiter, 
   standardLimiter, 
-  adminLimiter 
+  adminLimiter,
+  kycLimiter 
 } from "@/lib/rate-limit";
 import { createRestrictionToken, verifyRestrictionToken } from "@/lib/security-tokens";
 
@@ -73,46 +75,59 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // --- API RATE LIMITING ---
-  // Exclude auth session, callbacks, and error pages from rate limiting
+  // --- API RATE LIMITING (DEMO-SAFE & MULTI-TIERED) ---
+  // 1. Safe exclusions: Background polling, webhooks, health checks, cron triggers
   const isExcludedFromLimit = 
     pathname.startsWith("/api/auth/session") || 
     pathname.startsWith("/api/auth/callback") || 
     pathname.startsWith("/api/auth/error") ||
+    pathname.startsWith("/api/webhooks") ||
+    pathname.startsWith("/api/health") ||
+    pathname.startsWith("/api/cron") ||
+    pathname.startsWith("/api/pusher") ||
+    pathname.startsWith("/api/edgestore") ||
     pathname === "/blocked";
 
-  const isHighRiskRoute = 
-    pathname.startsWith("/api/auth") || 
-    pathname.startsWith("/api/ai") || 
-    pathname.startsWith("/api/host-applications") ||
-    pathname.startsWith("/api/payments") ||
-    pathname.startsWith("/api/admin") ||
-    pathname.startsWith("/verify");
+  // 2. Emergency demo bypass switch for peace of mind during live defense
+  const isDemoBypass = 
+    process.env.ENABLE_RATE_LIMIT === "false" ||
+    request.headers.get("x-boardtau-demo") === "capstone2026";
 
-  if (isHighRiskRoute && !isExcludedFromLimit) {
-    // 1. Identify the user (by IP)
+  if (pathname.startsWith("/api") && !isExcludedFromLimit && !isDemoBypass) {
+    // Key by authenticated User ID (prevents panelists on shared campus Wi-Fi from colliding)
     const ip = (request as any).ip || request.headers.get("x-forwarded-for") || "127.0.0.1";
+    const identifier = token?.id ? `usr_${token.id}` : `ip_${ip}`;
     
-    let limiter = standardLimiter; // Default
+    // Default: Standard Limiter (180 req / 1 min for Landlords & Tenants)
+    let limiter = standardLimiter;
 
-    // 2. Select the appropriate limiter bucket
     if (
       pathname.startsWith("/api/auth") || 
-      pathname.startsWith("/api/ai") || 
-      pathname.startsWith("/api/host-applications") ||
-      pathname.startsWith("/api/payments")
+      pathname.startsWith("/api/payments") || 
+      pathname.startsWith("/api/host-applications")
     ) {
-      limiter = strictLimiter;
+      limiter = strictLimiter; // 40 req / 1 min
+    } else if (pathname.startsWith("/api/ai")) {
+      limiter = aiLimiter;     // 60 req / 1 min (Generous for continuous back-and-forth chat & search)
+    } else if (pathname.startsWith("/api/kyc")) {
+      limiter = kycLimiter;    // 10 req / 1 min (AWS Rekognition protection)
     } else if (pathname.startsWith("/api/admin")) {
-      limiter = adminLimiter;
+      limiter = adminLimiter;  // 200 req / 1 min (Super Admin bulk management)
+    } else if (
+      (pathname === "/api/listings" && request.method === "GET") ||
+      pathname.startsWith("/api/property-types") ||
+      pathname.startsWith("/api/room-types") ||
+      pathname.startsWith("/api/colleges") ||
+      pathname.startsWith("/api/routing")
+    ) {
+      limiter = publicLimiter; // 120 req / 1 min (Public browse & map interactions)
     }
 
-    // 3. Enforce the limit
     try {
-      const { success, limit, reset, remaining } = await limiter.limit(ip);
+      const { success, limit, reset, remaining } = await limiter.limit(identifier);
 
       if (!success) {
-        // If the request is for an API but it's a manual navigation (accepts HTML), redirect to our premium blocked page
+        // Redirect browser navigation to high-fidelity blocked page; return 429 for API fetch calls
         const accept = request.headers.get("accept");
         if (accept && accept.includes("text/html")) {
           return NextResponse.redirect(new URL("/blocked", request.url));
@@ -120,7 +135,7 @@ export async function middleware(request: NextRequest) {
 
         return new NextResponse(
           JSON.stringify({ 
-            error: "Too many requests. Please try again later.",
+            error: "Too many requests. Please wait a moment before trying again.",
             message: "Rate limit exceeded" 
           }),
           { 
@@ -135,8 +150,8 @@ export async function middleware(request: NextRequest) {
         );
       }
     } catch (error) {
-      // Fail open if Redis is unreachable to avoid blocking legitimate users
-      console.error("Rate limiting error:", error);
+      // Fail-open: If Redis is temporarily unreachable, allow the request to pass smoothly
+      console.warn("[RateLimiter] Fail-open on Redis timeout/error:", error);
     }
   }
 

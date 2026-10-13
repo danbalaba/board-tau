@@ -1,4 +1,4 @@
-import { strictLimiter, publicLimiter, standardLimiter, adminLimiter } from '../rate-limit';
+import { strictLimiter, aiLimiter, publicLimiter, standardLimiter, adminLimiter } from '../rate-limit';
 
 jest.mock('@upstash/ratelimit', () => {
   return {
@@ -20,6 +20,7 @@ jest.mock('../redis', () => ({
 describe('rate-limit', () => {
   it('exports all rate limiters', () => {
     expect(strictLimiter).toBeDefined();
+    expect(aiLimiter).toBeDefined();
     expect(publicLimiter).toBeDefined();
     expect(standardLimiter).toBeDefined();
     expect(adminLimiter).toBeDefined();
