@@ -10,6 +10,9 @@ on:
         required: true
         default: 'BOARD-TAU-76'
 
+permissions:
+  contents: read
+
 jobs:
   sentry-autofix:
     name: Sentry Automated Issue Triage & Diagnostics
