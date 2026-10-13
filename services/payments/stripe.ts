@@ -193,11 +193,13 @@ export const handleStripeWebhook = async (session: any) => {
 
     // CRITICAL: Invalidate Cache
     const { revalidatePath } = await import("next/cache");
-    const { cache } = await import("@/lib/redis");
+    const { invalidateListingCaches } = await import("@/lib/redis");
     revalidatePath(`/listings/${listingId}`);
     try {
-      await cache.del(`listing:id:${listingId}`);
-      await cache.delPattern("listings:*");
+      await invalidateListingCaches({
+        listingId,
+        landlordId: updatedReservation.listing.userId,
+      });
     } catch (e) { console.error("Cache clear error in Stripe webhook:", e); }
   }
 

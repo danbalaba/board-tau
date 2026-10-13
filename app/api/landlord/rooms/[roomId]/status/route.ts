@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { requireLandlord } from "@/lib/landlord";
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { cache } from "@/lib/redis";
+import { cache, invalidateListingCaches } from "@/lib/redis";
 
 export async function PATCH(
   req: NextRequest,
@@ -36,8 +36,10 @@ export async function PATCH(
 
     // Invalidate Redis caches so tenant-side listing detail and search feeds update immediately
     if (room.listingId) {
-      await cache.del(`listing:id:${room.listingId}`);
-      await cache.delPattern("listings:*");
+      await invalidateListingCaches({
+        listingId: room.listingId,
+        landlordId: landlord.id,
+      });
     }
 
     revalidatePath("/landlord/rooms");

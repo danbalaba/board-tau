@@ -156,4 +156,36 @@ export const cache = {
   },
 };
 
+/**
+ * Invalidate all cached data related to listings, search results, and landlord portfolios.
+ * Guarantees that public searchers and landlords never see stale availability, pricing, or status.
+ */
+export async function invalidateListingCaches(params?: { listingId?: string; landlordId?: string }): Promise<void> {
+  const { listingId, landlordId } = params || {};
+  const tasks: Promise<any>[] = [
+    cache.delPattern("listings:*"),
+    cache.delPattern("api:listings:*"),
+    cache.delPattern("search:*"),
+    cache.delPattern("search_count:*"),
+    cache.del("listings:{}"),
+  ];
+
+  if (listingId) {
+    tasks.push(cache.del(`listing:id:${listingId}`));
+  }
+
+  if (landlordId) {
+    tasks.push(cache.delPattern(`landlord:properties:${landlordId}:*`));
+    tasks.push(cache.del(`landlord:properties:${landlordId}`));
+    tasks.push(cache.del(`landlord:dashboard:${landlordId}`));
+    tasks.push(cache.del(`landlord:dashboard:overview:${landlordId}`));
+    tasks.push(cache.delPattern(`landlord:analytics:${landlordId}:*`));
+  } else {
+    tasks.push(cache.delPattern("landlord:properties:*"));
+    tasks.push(cache.del("landlord:properties"));
+  }
+
+  await Promise.allSettled(tasks);
+}
+
 export default redis;

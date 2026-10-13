@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { autoCategorizeListing } from "@/utils/categorizer";
 import { clearLandlordCache } from "@/services/landlord/analytics";
+import { invalidateListingCaches } from "@/lib/redis";
 
 export type LandlordPropertyResult = {
   id: string;
@@ -521,6 +522,7 @@ export const createProperty = async (data: any) => {
     }
 
     await clearLandlordCache(landlord.id);
+    await invalidateListingCaches({ listingId: listing.id, landlordId: landlord.id });
     revalidatePath("/landlord/properties");
     return { success: true, data: listing };
   } catch (error) {
@@ -744,6 +746,7 @@ export const updateProperty = async (propertyId: string, data: any) => {
       }
     }
 
+    await invalidateListingCaches({ listingId: propertyId, landlordId: landlord.id });
     return { success: true, data: listing };
   } catch (error) {
     console.error("DEBUG: updateProperty error:", error);
@@ -768,6 +771,7 @@ export const deleteProperty = async (propertyId: string) => {
       }
     });
 
+    await invalidateListingCaches({ listingId: propertyId, landlordId: landlord.id });
     revalidatePath("/landlord/properties");
 
     return {
@@ -795,6 +799,7 @@ export const updateListingStatus = async (propertyId: string, isArchived: boolea
       },
     });
 
+    await invalidateListingCaches({ listingId: propertyId, landlordId: landlord.id });
     revalidatePath("/landlord/properties");
 
     return {

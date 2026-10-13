@@ -10,7 +10,7 @@ import {
   updateListingStatus,
 } from "@/services/landlord/properties";
 import { requireLandlord } from "@/lib/landlord";
-import { cache } from "@/lib/redis";
+import { cache, invalidateListingCaches } from "@/lib/redis";
 import { hasPermission } from "@/lib/rbac";
 import { getCurrentUser } from "@/services/user";
 import { getPostHogClient } from "@/lib/posthog-server";
@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Create cache key
-    const cacheKey = cursor ? `landlord:properties:${cursor}` : "landlord:properties";
+    // Create cache key scoped to current authenticated landlord
+    const cacheKey = cursor ? `landlord:properties:${user.id}:${cursor}` : `landlord:properties:${user.id}`;
 
     // Try to get from cache first
     const cachedData = await cache.get(cacheKey);
@@ -77,10 +77,11 @@ export async function POST(request: NextRequest) {
     const result = await createProperty(data);
 
     if (result.success) {
-      // Invalidate property cache
-      await cache.del("landlord:properties");
-      // Also invalidate listings cache since properties might be listed
-      await cache.del("listings:{}");
+      // Invalidate property and public search caches comprehensively
+      await invalidateListingCaches({
+        listingId: (result.data as any)?.id,
+        landlordId: user.id
+      });
 
       // Track listing creation server-side
       try {
@@ -148,10 +149,11 @@ export async function PUT(request: NextRequest) {
     const result = await updateProperty(propertyId, data);
 
     if (result.success) {
-      // Invalidate property cache
-      await cache.del("landlord:properties");
-      // Also invalidate listings cache since properties might be listed
-      await cache.del("listings:{}");
+      // Invalidate property and public search caches comprehensively
+      await invalidateListingCaches({
+        listingId: propertyId,
+        landlordId: user.id
+      });
 
       return NextResponse.json({
         success: true,
@@ -234,9 +236,10 @@ export async function DELETE(request: NextRequest) {
         where: { id: propertyId },
         data: { isArchived: true, status: "UNPUBLISHED" }
       });
-      await cache.del("landlord:properties");
-      await cache.del("listings:{}");
-      await cache.del(`listing:id:${propertyId}`);
+      await invalidateListingCaches({
+        listingId: propertyId,
+        landlordId: user.id
+      });
       return NextResponse.json({ success: true, message: "Property moved to archive." });
     }
 
@@ -271,10 +274,11 @@ export async function DELETE(request: NextRequest) {
       where: { id: propertyId }
     });
 
-    // Invalidate caches
-    await cache.del("landlord:properties");
-    await cache.del("listings:{}");
-    await cache.del(`listing:id:${propertyId}`);
+    // Invalidate caches comprehensively
+    await invalidateListingCaches({
+      listingId: propertyId,
+      landlordId: user.id
+    });
 
     return NextResponse.json({
       success: true,

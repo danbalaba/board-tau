@@ -17,6 +17,15 @@ const nextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error"] } : false,
   },
+  experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      'date-fns',
+      'recharts',
+      'framer-motion',
+      'lodash',
+    ],
+  },
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [

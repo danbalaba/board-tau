@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/services/user";
-import { cache } from "@/lib/redis";
+import { cache, invalidateListingCaches } from "@/lib/redis";
 import { safeDeleteEdgeStoreFiles } from "@/lib/edgestore-server";
 import { hasPermission } from "@/lib/rbac";
 
@@ -164,10 +164,12 @@ export async function PATCH(
     }
 
 
-    // Invalidate the cache for the parent listing so tenant-side updates immediately
+    // Invalidate the cache for the parent listing and public search immediately
     if (existing.listingId) {
-      await cache.del(`listing:id:${existing.listingId}`);
-      await cache.delPattern("listings:*");
+      await invalidateListingCaches({
+        listingId: existing.listingId,
+        landlordId: user.id
+      });
     }
 
     return NextResponse.json({ success: true, room });
@@ -236,8 +238,10 @@ export async function DELETE(
         data: { roomCount: { decrement: 1 } }
       }).catch((err) => console.error("[ROOM_DELETE] Failed to decrement roomCount:", err));
 
-      await cache.del(`listing:id:${existing.listingId}`);
-      await cache.delPattern("listings:*");
+      await invalidateListingCaches({
+        listingId: existing.listingId,
+        landlordId: user.id
+      });
     }
 
     return NextResponse.json({ success: true, message: "Room deleted successfully." });

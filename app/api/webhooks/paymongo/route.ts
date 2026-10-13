@@ -94,11 +94,13 @@ export async function POST(req: Request) {
 
             // CRITICAL: Invalidate Cache
             const { revalidatePath } = await import("next/cache");
-            const { cache } = await import("@/lib/redis");
+            const { invalidateListingCaches } = await import("@/lib/redis");
             revalidatePath(`/listings/${updatedReservation.listingId}`);
             try {
-              await cache.del(`listing:id:${updatedReservation.listingId}`);
-              await cache.delPattern("listings:*");
+              await invalidateListingCaches({
+                listingId: updatedReservation.listingId,
+                landlordId: updatedReservation.listing.userId,
+              });
             } catch (e) { console.error("Cache clear error in Paymongo webhook:", e); }
           }
 
