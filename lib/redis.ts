@@ -47,6 +47,10 @@ const sanitizeErrorMessage = (error: unknown): string => {
   return cleanMsg.replace(/[\r\n]/g, ' ').trim();
 };
 
+const sanitizeLogParam = (val: unknown): string => {
+  return String(val).replace(/[\r\n]/g, ' ').slice(0, 200);
+};
+
 // Cache operations helper
 export const cache = {
   /**
@@ -79,7 +83,7 @@ export const cache = {
 
       return typeof data === 'string' ? JSON.parse(data, dateReviver) : data;
     } catch (error) {
-      console.error(`Cache get error for [${key}]:`, sanitizeErrorMessage(error));
+      console.error('Cache get error for key:', sanitizeLogParam(key), sanitizeErrorMessage(error));
       return null;
     }
   },
@@ -94,7 +98,7 @@ export const cache = {
       await redis.set(key, JSON.stringify(data), { ex: ttl });
       return true;
     } catch (error) {
-      console.error(`Cache set error for [${key}]:`, sanitizeErrorMessage(error));
+      console.error('Cache set error for key:', sanitizeLogParam(key), sanitizeErrorMessage(error));
       return false;
     }
   },
@@ -107,7 +111,7 @@ export const cache = {
       await redis.del(key);
       return true;
     } catch (error) {
-      console.error(`Cache del error for [${key}]:`, sanitizeErrorMessage(error));
+      console.error('Cache del error for key:', sanitizeLogParam(key), sanitizeErrorMessage(error));
       return false;
     }
   },
@@ -124,7 +128,7 @@ export const cache = {
       }
       return true;
     } catch (error) {
-      console.error(`Cache delPattern error for [${pattern}]:`, sanitizeErrorMessage(error));
+      console.error('Cache delPattern error for pattern:', sanitizeLogParam(pattern), sanitizeErrorMessage(error));
       return false;
     }
   },
@@ -137,7 +141,7 @@ export const cache = {
       const result = await redis.exists(key);
       return result === 1;
     } catch (error) {
-      console.error(`Cache exists error for [${key}]:`, sanitizeErrorMessage(error));
+      console.error('Cache exists error for key:', sanitizeLogParam(key), sanitizeErrorMessage(error));
       return false;
     }
   },

@@ -76,7 +76,7 @@ export async function hasPermission(userId: string, permissionName: string): Pro
     // 5. Final fallback: No permission
     return false;
   } catch (error) {
-    console.error(`Error checking permission ${permissionName} for user ${userId}:`, error);
+    console.error('Error checking permission for user:', { permission: permissionName, user: userId }, error);
     return false;
   }
 }
