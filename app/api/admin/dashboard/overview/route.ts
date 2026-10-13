@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { cache } from '@/lib/redis';
 import { ApiResponseFormatter } from '@/lib/api-response';
 import { PrismaErrorHandler } from '@/lib/prisma-error-handler';
 import { getServerSession } from 'next-auth';
@@ -12,6 +13,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(
         ApiResponseFormatter.error('Unauthorized', 'Access denied'),
         { status: 401 }
+      );
+    }
+
+    const cacheKey = "admin:dashboard:overview";
+    const cachedData = await cache.get(cacheKey);
+    if (cachedData) {
+      return NextResponse.json(
+        ApiResponseFormatter.success(cachedData, 'Dashboard overview data fetched successfully (cached)')
       );
     }
 
@@ -118,6 +127,9 @@ export async function GET(req: NextRequest) {
         adminImage: log.admin?.image || null
       }))
     };
+
+    // Cache overview in Redis for 60 seconds
+    await cache.set(cacheKey, overviewData, 60);
 
     return NextResponse.json(
       ApiResponseFormatter.success(overviewData, 'Dashboard overview data fetched successfully')

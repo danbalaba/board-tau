@@ -195,11 +195,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Forbidden: Missing permission MANAGE_RESERVATIONS" }, { status: 403 });
     }
 
-    // Get all reservation requests for the landlord's listings
+    // Get all reservation requests for the landlord's listings (capped at 100 to prevent unbounded memory bloat)
     const reservationRequests = await db.inquiry.findMany({
       where: {
         listing: { userId: user.id },
       },
+      take: 100,
       include: {
         listing: {
           select: {

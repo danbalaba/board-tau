@@ -162,37 +162,49 @@ export async function POST(request: Request) {
         }
       });
 
-      // 3. Send Email Notification to Landlord
-      const landlord = await db.user.findUnique({
-        where: { id: listing.userId },
-        select: { email: true, name: true }
-      });
+      // 3 & 4. Send Email Notifications to Landlord & Tenant asynchronously (non-blocking)
+      (async () => {
+        try {
+          const landlord = await db.user.findUnique({
+            where: { id: listing.userId },
+            select: { email: true, name: true }
+          });
 
-      if (landlord && landlord.email) {
-        await sendInquirySubmissionEmail(
-          landlord,
-          { name: user.name, message: message },
-          { title: listing.title },
-          room,
-          inquiry
-        );
-      }
+          const emailPromises: Promise<any>[] = [];
+          if (landlord && landlord.email) {
+            emailPromises.push(
+              sendInquirySubmissionEmail(
+                landlord,
+                { name: user.name, message: message },
+                { title: listing.title },
+                room,
+                inquiry
+              )
+            );
+          }
 
-      // 4. Send Email Receipt to Tenant
-      if (user.email) {
-        await sendInquiryReceiptEmail(
-          user,
-          listing,
-          room,
-          inquiry
-        );
-      }
+          if (user.email) {
+            emailPromises.push(
+              sendInquiryReceiptEmail(
+                user,
+                listing,
+                room,
+                inquiry
+              )
+            );
+          }
+
+          await Promise.allSettled(emailPromises);
+        } catch (emailErr) {
+          console.error("Background inquiry email sending error:", emailErr);
+        }
+      })().catch((err) => console.error("Unhandled error in inquiry email task:", err));
     } catch (notifError) {
       console.error("Failed to process landlord notifications:", notifError);
       // We don't block the inquiry if notification fails, just log it
     }
 
-    // Track inquiry creation server-side
+    // Track inquiry creation server-side (non-blocking flush)
     try {
       const posthog = getPostHogClient();
       posthog.capture({
@@ -206,7 +218,8 @@ export async function POST(request: Request) {
           is_solo_buyout: isSoloBuyout,
         },
       });
-      await posthog.flush();
+      // Fire-and-forget flush to prevent blocking the client HTTP response
+      posthog.flush().catch((phErr) => console.error("PostHog flush error:", phErr));
     } catch (phErr) {
       console.error("PostHog inquiry_created capture failed:", phErr);
     }

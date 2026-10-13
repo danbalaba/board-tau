@@ -1144,6 +1144,11 @@ export const getLandlordComprehensiveAnalytics = async (
 ): Promise<ComprehensiveAnalyticsResult> => {
   const landlord = await requireLandlord();
 
+  // Check Redis Cache First
+  const cacheKey = `landlord:analytics:${landlord.id}:${propertyId}:${period}`;
+  const cachedData = await cache.get(cacheKey);
+  if (cachedData) return cachedData;
+
   const isSingleProperty = propertyId !== 'all' && Boolean(propertyId);
   const now = new Date();
 
@@ -1589,7 +1594,7 @@ export const getLandlordComprehensiveAnalytics = async (
     ? Math.min(100, Math.round((bookingsCount / totalInquiriesCount) * 100))
     : 0;
 
-  return {
+  const result: ComprehensiveAnalyticsResult = {
     scope: {
       propertyId: effectivePropertyId,
       propertyName,
@@ -1620,6 +1625,11 @@ export const getLandlordComprehensiveAnalytics = async (
     ratingsDistribution,
     propertyTypes: propertyTypesList,
   };
+
+  // Cache compiled analytics for 5 minutes (300s)
+  await cache.set(cacheKey, result, 300);
+
+  return result;
 };
 
 

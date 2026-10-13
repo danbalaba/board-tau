@@ -27,43 +27,56 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(cachedData);
     }
 
-    // Get total revenue
-     const reservations = await db.reservation.findMany({
-       where: {
-         status: "RESERVED"
-       },
-      select: {
-        totalPrice: true
-      }
-    });
-    const totalRevenue = reservations.reduce((sum: any, reservation: any) => sum + reservation.totalPrice, 0);
+    // Parallel execution of all analytics queries with native MongoDB aggregations
+    const [
+      revenueAggregate,
+      activeUsers,
+      totalListings,
+      reviewAggregate,
+      monthlyData,
+      userRoles,
+      propertyTypes,
+    ] = await Promise.all([
+      db.reservation.aggregate({
+        where: { status: "RESERVED" },
+        _sum: { totalPrice: true },
+      }),
+      db.user.count(),
+      db.listing.count(),
+      db.review.aggregate({
+        _avg: { rating: true },
+        _count: { id: true },
+      }),
+      db.reservation.findMany({
+        select: {
+          startDate: true,
+          totalPrice: true,
+        },
+        orderBy: {
+          startDate: "asc",
+        },
+      }),
+      db.user.groupBy({
+        by: ["role"],
+        _count: {
+          id: true,
+        },
+      }),
+      db.propertyType.findMany({
+        include: {
+          _count: {
+            select: {
+              listings: true,
+            },
+          },
+        },
+      }),
+    ]);
 
-    // Get active users
-    const activeUsers = await db.user.count();
-
-    // Get total listings
-    const totalListings = await db.listing.count();
-
-    // Get average rating
-    const reviews = await db.review.findMany({
-      select: {
-        rating: true
-      }
-    });
-    const averageRating = reviews.length > 0
-      ? (reviews.reduce((sum: any, review: any) => sum + review.rating, 0) / reviews.length).toFixed(1)
+    const totalRevenue = revenueAggregate._sum.totalPrice || 0;
+    const averageRating = reviewAggregate._avg.rating != null
+      ? reviewAggregate._avg.rating.toFixed(1)
       : "0";
-
-    // Get monthly bookings data
-    const monthlyData = await db.reservation.findMany({
-      select: {
-        startDate: true,
-        totalPrice: true
-      },
-      orderBy: {
-        startDate: "asc"
-      }
-    });
 
     // Transform monthly data
     const monthlyStats = new Map<string, { bookings: number; revenue: number }>();
@@ -78,7 +91,7 @@ export async function GET(request: NextRequest) {
 
       const currentStats = monthlyStats.get(monthYear)!;
       currentStats.bookings++;
-      currentStats.revenue += reservation.totalPrice;
+      currentStats.revenue += reservation.totalPrice || 0;
     });
 
     const formattedMonthlyData = Array.from(monthlyStats.entries())
@@ -95,25 +108,6 @@ export async function GET(request: NextRequest) {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         return months.indexOf(a.name) - months.indexOf(b.name);
       });
-
-    // Get user growth data (students vs landlords)
-    const userRoles = await db.user.groupBy({
-      by: ["role"],
-      _count: {
-        id: true
-      }
-    });
-
-    // Get property type distribution
-    const propertyTypes = await db.propertyType.findMany({
-      include: {
-        _count: {
-          select: {
-            listings: true
-          }
-        }
-      }
-    });
 
     const response = {
       success: true,

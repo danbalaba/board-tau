@@ -7,7 +7,7 @@ import { sendReservationNotificationEmail } from "@/services/email/notifications
 import { encryptEntityId } from "@/lib/encryption";
 import { baseUrl } from "@/services/email/constants";
 import { revalidatePath } from "next/cache";
-import { cache } from "@/lib/redis";
+import { cache, invalidateListingCaches } from "@/lib/redis";
 
 export const getLandlordBookings = async (args?: {
   cursor?: string;
@@ -280,56 +280,65 @@ export const updateBookingStatus = async (
     });
   }
 
-  // 3. Send Email Notification to Tenant (ONLY if they have an email)
-  try {
-    if (updatedBooking.user && updatedBooking.user.email) {
-      await sendReservationNotificationEmail(
-        updatedBooking.user,
-        updatedBooking.listing,
-        status,
-        title,
-        description
-      );
-    }
+  // 3 & 4. Send Email Notifications asynchronously (non-blocking)
+  (async () => {
+    try {
+      const emailPromises: Promise<any>[] = [];
 
-    // 4. Special case: Notify Landlord of check-in via email
-    if (status === "CHECKED_IN") {
-      const landlordUser = await db.user.findUnique({
-        where: { id: updatedBooking.listing.userId },
-        select: { email: true, name: true }
-      });
-
-      if (landlordUser && landlordUser.email) {
-        const guestName = updatedBooking.isWalkIn 
-          ? updatedBooking.guestName || 'A walk-in guest' 
-          : updatedBooking.user?.name || 'A guest';
-
-        await sendReservationNotificationEmail(
-          landlordUser,
-          updatedBooking.listing,
-          status,
-          "Check-in Successful",
-          `${guestName} has been successfully checked in to your property.`,
-          true,
-          `${baseUrl}/landlord/bookings`
+      if (updatedBooking.user && updatedBooking.user.email) {
+        emailPromises.push(
+          sendReservationNotificationEmail(
+            updatedBooking.user,
+            updatedBooking.listing,
+            status,
+            title,
+            description
+          )
         );
       }
-    }
-  } catch (emailError) {
-    console.error("Failed to send booking status email:", emailError);
-  }
 
-  // Code 4: Next.js Route & Manual Redis Cache Invalidation
+      if (status === "CHECKED_IN") {
+        const landlordUser = await db.user.findUnique({
+          where: { id: updatedBooking.listing.userId },
+          select: { email: true, name: true }
+        });
+
+        if (landlordUser && landlordUser.email) {
+          const guestName = updatedBooking.isWalkIn 
+            ? updatedBooking.guestName || 'A walk-in guest' 
+            : updatedBooking.user?.name || 'A guest';
+
+          emailPromises.push(
+            sendReservationNotificationEmail(
+              landlordUser,
+              updatedBooking.listing,
+              status,
+              "Check-in Successful",
+              `${guestName} has been successfully checked in to your property.`,
+              true,
+              `${baseUrl}/landlord/bookings`
+            )
+          );
+        }
+      }
+
+      await Promise.allSettled(emailPromises);
+    } catch (emailError) {
+      console.error("Failed to send booking status email:", emailError);
+    }
+  })().catch((err) => console.error("Unhandled booking email error:", err));
+
+  // Code 4: Next.js Route & Redis Cache Invalidation
   // Critical fix: ensure the front-facing listing page and available rooms section reload actual db capacity instead of stale cache
   revalidatePath(`/listings/${booking.listingId}`);
   revalidatePath(`/landlord/bookings`);
   revalidatePath(`/reservations`);
 
   try {
-    // Invalidate manual Redis cache for the listing
-    await cache.del(`listing:id:${booking.listingId}`);
-    // Also clear generic listings cache just to be safe so search grids update
-    await cache.delPattern("listings:*");
+    await invalidateListingCaches({
+      listingId: booking.listingId,
+      landlordId: landlord.id,
+    });
   } catch (cacheError) {
     console.error("Failed to invalidate Redis cache:", cacheError);
   }

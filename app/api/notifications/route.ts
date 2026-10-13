@@ -13,32 +13,34 @@ export async function GET(request: Request) {
     const cursor = searchParams.get("cursor");
     const limit = parseInt(searchParams.get("limit") || "10", 10);
 
-    const notifications = await db.notification.findMany({
-      where: {
-        userId: user.id,
-      },
-      take: limit + 1,
-      ...(cursor && { skip: 1, cursor: { id: cursor } }),
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const [notificationsRaw, grouped] = await Promise.all([
+      db.notification.findMany({
+        where: {
+          userId: user.id,
+        },
+        take: limit + 1,
+        ...(cursor && { skip: 1, cursor: { id: cursor } }),
+        orderBy: {
+          createdAt: "desc",
+        },
+      }),
+      // Include unread stats in the same payload in parallel
+      db.notification.groupBy({
+        by: ['type'],
+        where: {
+          userId: user.id,
+          isRead: false,
+        },
+        _count: { id: true },
+      }),
+    ]);
 
+    const notifications = [...notificationsRaw];
     let nextCursor: string | null = null;
     if (notifications.length > limit) {
       const nextItem = notifications.pop();
       nextCursor = nextItem!.id;
     }
-
-    // Include unread stats in the same payload for efficiency
-    const grouped = await db.notification.groupBy({
-      by: ['type'],
-      where: {
-        userId: user.id,
-        isRead: false,
-      },
-      _count: { id: true },
-    });
 
     const byType: Record<string, number> = {};
     let totalUnread = 0;

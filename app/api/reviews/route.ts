@@ -87,24 +87,24 @@ export async function POST(request: Request) {
       } as any
     });
 
-    // 5. Synchronize Listing Average Rating
-    const allReviews = await db.review.findMany({
-      where: { listingId: listingId, status: "approved" },
-      select: { rating: true }
-    });
-    
-    let newAvgRating: number | null = null;
-    if (allReviews.length > 0) {
-       newAvgRating = allReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / allReviews.length;
-    }
-
+    // 5. Synchronize Listing Average Rating via Native Aggregation
+    let landlordIdForCache: string | undefined;
     try {
+      const ratingAggregation = await db.review.aggregate({
+        where: { listingId, status: "approved" },
+        _avg: { rating: true },
+        _count: { rating: true },
+      });
+
+      const newAvgRating = ratingAggregation._avg.rating ?? null;
+      const reviewCount = ratingAggregation._count.rating;
+
       await db.listing.update({
         where: { id: listingId },
         data: {
           rating: newAvgRating,
-          reviewCount: allReviews.length
-        }
+          reviewCount: reviewCount,
+        },
       });
     } catch (updateErr) {
       console.error("Failed to sync listing rating:", updateErr);
@@ -118,6 +118,8 @@ export async function POST(request: Request) {
       });
 
       if (listing) {
+        landlordIdForCache = listing.userId;
+
         // Create in-app notification for Landlord & trigger Pusher "new-notification" event
         await createNotification({
           userId: listing.userId,
@@ -155,30 +157,42 @@ export async function POST(request: Request) {
           }
         });
 
-        // Send Email Notification to Landlord
-        const landlord = await db.user.findUnique({
-          where: { id: listing.userId },
-          select: { email: true, name: true }
-        });
+        // 7 & 8. Send Email Notifications asynchronously (non-blocking)
+        (async () => {
+          try {
+            const landlord = await db.user.findUnique({
+              where: { id: listing.userId },
+              select: { email: true, name: true }
+            });
 
-        if (landlord && landlord.email) {
-          await sendNewReviewEmail(
-            landlord,
-            { name: currentUser.name },
-            { title: listing.title },
-            rating,
-            comment
-          );
-        }
+            const emailPromises: Promise<any>[] = [];
+            if (landlord && landlord.email) {
+              emailPromises.push(
+                sendNewReviewEmail(
+                  landlord,
+                  { name: currentUser.name },
+                  { title: listing.title },
+                  rating,
+                  comment
+                )
+              );
+            }
 
-        // Send Receipt Email to Guest
-        if (reservation.user && reservation.user.email) {
-           await sendReviewReceiptEmail(
-              { email: reservation.user.email, name: reservation.user.name },
-              { title: listing.title },
-              rating
-           );
-        }
+            if (reservation.user && reservation.user.email) {
+              emailPromises.push(
+                sendReviewReceiptEmail(
+                  { email: reservation.user.email, name: reservation.user.name },
+                  { title: listing.title },
+                  rating
+                )
+              );
+            }
+
+            await Promise.allSettled(emailPromises);
+          } catch (emailErr) {
+            console.error("Background review email error:", emailErr);
+          }
+        })().catch((err) => console.error("Unhandled review email error:", err));
 
         // Create In-App Notification for Guest
         await createNotification({
@@ -195,17 +209,19 @@ export async function POST(request: Request) {
 
     // 9. Invalidate Cache & Revalidate Path
     try {
-      const { cache } = await import("@/lib/redis");
+      const { invalidateListingCaches } = await import("@/lib/redis");
       const { revalidatePath } = await import("next/cache");
       
-      await cache.del(`listing:id:${listingId}`);
-      await cache.delPattern("listings:*");
+      await invalidateListingCaches({
+        listingId,
+        landlordId: landlordIdForCache,
+      });
       revalidatePath(`/listings/${listingId}`);
     } catch (cacheError) {
       console.error("Cache invalidation failed:", cacheError);
     }
 
-    // Track review submission server-side
+    // Track review submission server-side (non-blocking flush)
     try {
       const posthog = getPostHogClient();
       posthog.capture({
@@ -219,7 +235,7 @@ export async function POST(request: Request) {
           has_images: (images || []).length > 0,
         },
       });
-      await posthog.flush();
+      posthog.flush().catch((phErr) => console.error("PostHog flush error:", phErr));
     } catch (phErr) {
       console.error("PostHog review_submitted capture failed:", phErr);
     }

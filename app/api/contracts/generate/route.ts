@@ -19,21 +19,42 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
     }
 
-    // Security Check: Only allow if the requester is the tenant, landlord, or admin
-    const listing = await db.listing.findUnique({
-      where: { id: listingId },
-      include: { 
-        user: true,
-        listingLinks: {
-          include: {
-            attribute: true
+    // Parallel execution of all required data fetches
+    const [listing, tenantUser, room, inquiry, leaseContract, tenantSigRecord] = await Promise.all([
+      db.listing.findUnique({
+        where: { id: listingId },
+        include: { 
+          user: true,
+          listingLinks: {
+            include: {
+              attribute: true
+            }
           }
         }
-      }
-    });
+      }),
+      db.user.findUnique({ where: { id: tenantId } }),
+      db.room.findUnique({ where: { id: roomId } }),
+      db.inquiry.findFirst({
+        where: { listingId, userId: tenantId, roomId },
+        orderBy: { createdAt: 'desc' }
+      }),
+      db.leaseContract.findFirst({
+        where: { listingId },
+        include: { signatures: true }
+      }),
+      db.contractSignature.findFirst({
+        where: {
+          signerId: tenantId,
+          signerType: "TENANT",
+          contract: { listingId }
+        },
+        orderBy: { signedAt: 'desc' }
+      })
+    ]);
 
     if (!listing) return NextResponse.json({ error: "Listing not found" }, { status: 404 });
 
+    // Security Check: Only allow if the requester is the tenant, landlord, or admin
     const isTenant = user.id === tenantId;
     const isLandlord = user.id === listing.userId;
     const isAdmin = user.role === "ADMIN" || user.role === "SUPER_ADMIN";
@@ -42,27 +63,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Fetch the Tenant user
-    const tenantUser = await db.user.findUnique({ where: { id: tenantId } });
     if (!tenantUser) return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
-
-    // Fetch the room
-    const room = await db.room.findUnique({ where: { id: roomId } });
     if (!room) return NextResponse.json({ error: "Room not found" }, { status: 404 });
-
-    // Fetch the Inquiry to get moveIn and moveOut dates
-    const inquiry = await db.inquiry.findFirst({
-      where: { listingId, userId: tenantId, roomId },
-      orderBy: { createdAt: 'desc' }
-    });
-
     if (!inquiry) return NextResponse.json({ error: "Inquiry not found" }, { status: 404 });
-
-    // Fetch the lease contract (if exists)
-    const leaseContract = await db.leaseContract.findFirst({
-      where: { listingId },
-      include: { signatures: true }
-    });
 
     const businessInfo = (listing.businessInfo as any) || {};
 
@@ -84,16 +87,6 @@ export async function GET(request: Request) {
       businessInfo?.landlordSignatureBase64 ||
       businessInfo?.propertyConfig?.landlordSignatureBase64 ||
       "";
-
-    // Check for tenant signature in ContractSignature table or Inquiry
-    const tenantSigRecord = await db.contractSignature.findFirst({
-      where: {
-        signerId: tenantId,
-        signerType: "TENANT",
-        contract: { listingId }
-      },
-      orderBy: { signedAt: 'desc' }
-    });
 
     const tenantSig =
       leaseContract?.signatures?.find((s: any) => s.signerType === 'TENANT' && s.signerId === tenantId)?.signatureUrl ||

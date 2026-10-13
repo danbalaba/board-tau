@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { cache } from '@/lib/redis';
 import { ApiResponseFormatter } from '@/lib/api-response';
 import { PrismaErrorHandler } from '@/lib/prisma-error-handler';
 import { getServerSession } from 'next-auth';
@@ -19,6 +20,15 @@ export async function GET(req: NextRequest) {
     // Get time range from query params
     const { searchParams } = new URL(req.url);
     const range = searchParams.get('range') || '30d';
+
+    // Check Redis cache for fast responses
+    const cacheKey = `admin:analytics:overview:${range}`;
+    const cachedData = await cache.get(cacheKey);
+    if (cachedData) {
+      return NextResponse.json(
+        ApiResponseFormatter.success(cachedData, 'Executive overview fetched successfully (cached)')
+      );
+    }
 
     // Calculate date range
     const now = new Date();
@@ -92,13 +102,17 @@ export async function GET(req: NextRequest) {
           listingRevenue[res.listingId] = (listingRevenue[res.listingId] || 0) + (res.room?.reservationFee || 0);
         });
         const sortedListings = Object.entries(listingRevenue).sort((a, b) => b[1] - a[1]).slice(0, 5);
-        return Promise.all(sortedListings.map(async ([listingId, revenue]) => {
-          const listing = await db.listing.findUnique({ where: { id: listingId } });
-          return {
-            listingId,
-            listingTitle: listing?.title || 'Unknown Property',
-            revenue,
-          };
+        if (sortedListings.length === 0) return [];
+        const topListingIds = sortedListings.map(([id]) => id);
+        const topListings = await db.listing.findMany({
+          where: { id: { in: topListingIds } },
+          select: { id: true, title: true }
+        });
+        const titleMap = new Map(topListings.map((l: any) => [l.id, l.title]));
+        return sortedListings.map(([listingId, revenue]) => ({
+          listingId,
+          listingTitle: titleMap.get(listingId) || 'Unknown Property',
+          revenue,
         }));
       }),
       // Platform Engagement Trend
@@ -331,6 +345,9 @@ export async function GET(req: NextRequest) {
       activities: recentActivities.activities,
       recentSales: recentActivities.recentSales,
     };
+
+    // Cache overview response for 60 seconds
+    await cache.set(cacheKey, overviewData, 60);
 
     return NextResponse.json(
       ApiResponseFormatter.success(overviewData, 'Executive overview fetched successfully')

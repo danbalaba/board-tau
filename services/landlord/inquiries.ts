@@ -262,19 +262,17 @@ export const respondToInquiry = async (
     payload: updatedInquiry,
   });
 
-  // 3. Send Email Notification to Tenant
-  try {
-    if (inquiry.user && inquiry.user.email) {
-      await sendInquiryStatusEmail(
-        inquiry.user,
-        updatedInquiry.listing,
-        status,
-        message,
-        inquiry
-      );
-    }
-  } catch (emailError) {
-    console.error("Failed to send inquiry status email:", emailError);
+  // 3. Send Email Notification to Tenant (Asynchronous / Non-blocking)
+  if (inquiry.user && inquiry.user.email) {
+    sendInquiryStatusEmail(
+      inquiry.user,
+      updatedInquiry.listing,
+      status,
+      message,
+      inquiry
+    ).catch((emailError) => {
+      console.error("Failed to send inquiry status email:", emailError);
+    });
   }
 
   return updatedInquiry;
